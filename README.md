@@ -1,12 +1,15 @@
-# 🇩🇰 Dansk Verber – Konjugation A2
+# 🇩🇰 Dänisch lernen – Verben & Vokabeln A2
 
-Mobile Web App (PWA, für das iPhone optimiert) zum Lernen dänischer Verben von **Deutsch nach Dänisch**,
-mit Fokus auf der **Konjugation** (Infinitiv · Nutid · Datid · Førnutid · Imperativ).
-Inhalt: *Kapitel 1 – Verben & Konjugation* (28 Verben, 4 Gruppen, Beispielsätze).
+Mobile Web App (PWA, für das iPhone optimiert) zum Dänischlernen auf Niveau A2.
+Ausgangssprache über 🌐 umschaltbar (**Deutsch / English**), Lernsprache ist immer **Dänisch**.
+
+Zwei Lernbereiche mit gleichem Aufbau:
+- 🔤 **Verben** – *Kapitel 1*: 28 Verben, Konjugation (Infinitiv · Nutid · Datid · Førnutid · Imperativ)
+- 📚 **Vokabeln** – A2-Grundwortschatz: 52 Substantive (en/et, bestimmt, Mehrzahl) in 6 Themen + 12 Adjektive (-t / -e)
 
 ## Drei Schwierigkeitsstufen
 
-1. **Erkennen** – dänische Form (z. B. *spiste*) → deutsche Bedeutung + Zeitform wählen
+1. **Erkennen** – dänische Form (z. B. *spiste*, *bilen*) → Bedeutung + Form wählen
 2. **Auswählen** – *essen · Datid* → richtige dänische Form aus 4 wählen (mit typischen Fehlformen wie *spisede*)
 3. **Schreiben** – *essen · Datid* → dänische Form selbst tippen (Tasten **æ ø å** inklusive)
 
@@ -22,7 +25,7 @@ npm test         # Unit-Tests der Quiz-Logik
 
 ## Aufs iPhone
 
-1. Ordner statisch hosten, z. B. **GitHub Pages** (Repo → Settings → Pages → Branch wählen).
+1. Deployment läuft automatisch per GitHub Actions auf **GitHub Pages** (einmalig: Repo → Settings → Pages → Source „GitHub Actions“).
 2. URL in **Safari** öffnen → Teilen-Symbol → **„Zum Home-Bildschirm“**.
 3. Die App startet danach im Vollbild und funktioniert auch offline.
 

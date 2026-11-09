@@ -1,12 +1,15 @@
 // Service Worker: Offline-Cache. Bei Änderungen an Assets CACHE_VERSION erhöhen.
-const CACHE_VERSION = 'dansk-verber-v1';
+const CACHE_VERSION = 'dansk-verber-v2';
 const ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './css/app.css',
   './js/app.js',
-  './js/data.js',
+  './js/i18n.js',
+  './js/decks/index.js',
+  './js/decks/verbs.js',
+  './js/decks/vocab.js',
   './js/quiz.js',
   './js/storage.js',
   './js/speech.js',

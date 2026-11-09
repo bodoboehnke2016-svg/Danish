@@ -1,121 +1,161 @@
-# Architektur – „Dansk Verber“ (A2)
+# Architektur – „Dänisch lernen“ (A2)
 
-Mobile Web App (PWA) zum Lernen dänischer Verben **Deutsch ⇄ Dänisch** mit
-Schwerpunkt auf der **Konjugation** (Infinitiv, Nutid, Datid, Førnutid, Imperativ).
-Datengrundlage: *Kapitel 1 – Verben & Konjugation* (28 Verben in 4 Gruppen + Beispielsätze).
+Mobile Web App (PWA) zum Dänischlernen, optimiert für das iPhone.
+**Lernsprache ist immer Dänisch** – die **Ausgangssprache** (Oberfläche, Bedeutungen, Hinweise)
+ist umschaltbar: aktuell **Deutsch** und **Englisch**.
+
+Zwei getrennte Lernbereiche mit identischem Aufbau:
+
+| Bereich | Inhalt | „Formen“ |
+|---|---|---|
+| 🔤 **Verben** | Kapitel 1 – 28 Verben in 4 Gruppen + Beispielsätze | Infinitiv · Nutid · Datid · Førnutid · Imperativ |
+| 📚 **Vokabeln** | A2-Grundwortschatz – 52 Substantive in 6 Themen + 12 Adjektive | Substantiv: Grundform (en/et) · Bestemt · Flertal — Adjektiv: Grundform · t-form · e-form |
 
 ## 1. Ziele & Rahmenbedingungen
 
 | Ziel | Entscheidung |
 |---|---|
-| Läuft auf dem iPhone wie eine App | PWA: `manifest.webmanifest`, `apple-mobile-web-app-*` Meta-Tags, Apple-Touch-Icon (PNG), Safe-Area-Insets, `100dvh` |
-| Offline lernen (U-Bahn, Flugzeug) | Service Worker mit Cache-First-Strategie für alle Assets |
-| Kein Server, kein Login | Statische Dateien, Fortschritt in `localStorage` |
-| Einfach zu hosten & zu warten | Vanilla JS (ES-Module), kein Build-Schritt, kein Framework → läuft direkt auf GitHub Pages / Netlify |
-| Konjugation steht im Fokus | Jede Lernkarte ist ein **(Verb × Zeitform)**-Paar, nicht nur ein Verb |
+| Läuft auf dem iPhone wie eine App | PWA: `manifest.webmanifest`, `apple-mobile-web-app-*` Meta-Tags, Apple-Touch-Icon, Safe-Area-Insets, `100dvh` |
+| Offline lernen | Service Worker mit Cache-First-Strategie (versioniert) |
+| Kein Server, kein Login | Statische Dateien, Fortschritt & Einstellungen in `localStorage` |
+| Einfach zu hosten & zu warten | Vanilla JS (ES-Module), kein Build-Schritt → GitHub Pages per Workflow |
+| Erweiterbar um Sprachen | Alle Texte über `i18n.js`, alle Inhalte mit `tr: {de, en}` |
+| Erweiterbar um Lernbereiche | Generische Quiz-Engine + austauschbare **Decks** mit gleicher Schnittstelle |
 
-## 2. Lernmodell
+## 2. Lernmodell (für alle Bereiche gleich)
 
 ### Lerneinheit („Item“)
-`item = verb × zeitform` → z. B. `spise:datid` = *essen, Präteritum → spiste*.
-28 Verben × 4–5 Zeitformen = **136 Items** (Modalverben haben keinen Imperativ).
+`item = Eintrag × Form` → z. B. `spise:datid` (*essen, Präteritum → spiste*) oder `vocab/bil:def` (*Auto, bestimmt → bilen*).
+Verben: 136 Items · Vokabeln: 192 Items.
 
 ### Drei Schwierigkeitsstufen
 
-| Stufe | Frage | Antwort | Lernziel |
-|---|---|---|---|
-| **1 – Erkennen** | dänische Form, z. B. **„spiste“** 🔊 | 4 Optionen auf Deutsch: *essen · Datid (ich aß)* | Form erkennen & Zeitform zuordnen |
-| **2 – Auswählen** | *essen · Datid* (ich aß) → „jeg ___“ | 4 dänische Formen | richtige Form von typischen Fehlern unterscheiden |
-| **3 – Schreiben** | *essen · Datid* (ich aß) → „jeg ___“ | freie Eingabe (+ Tasten æ ø å) | aktive Produktion |
+| Stufe | Frage | Antwort |
+|---|---|---|
+| **1 – Erkennen** | dänische Form, z. B. **„spiste“** / **„bilen“** 🔊 | 4 Optionen in der Ausgangssprache: *essen · Datid (ich aß)* / *Auto · Bestemt (das Auto)* |
+| **2 – Auswählen** | *essen · Datid* → „jeg ___“ / *Auto · Bestemt* → „___“ | 4 dänische Formen |
+| **3 – Schreiben** | wie Stufe 2 | freie Eingabe (+ Tasten æ ø å) |
 
-**Distraktoren (falsche Antworten) sind didaktisch gewählt:**
-- Stufe 1: gleiches Verb in anderer Zeitform + andere Verben in gleicher Zeitform.
-- Stufe 2: andere Formen desselben Verbs **und künstlich erzeugte Fehlformen**
-  nach der falschen Regel (z. B. *spisede* statt *spiste*, *er spist* statt *har spist*,
-  *gåede* statt *gik*). So wird genau der typische A2-Fehler trainiert (-ede vs. -te, har vs. er).
-- Mehrdeutige Formen (z. B. *kom* = Datid **und** Imperativ von *komme*) werden erkannt:
-  alle passenden Antworten zählen als richtig, und sie tauchen nie als Distraktor auf.
+**Didaktische Distraktoren** (pro Deck in `wrongForms`):
+- Verben: falsche Regel (*spisede* statt *spiste*), falsches Hilfsverb (*er spist*, *har gået*).
+- Substantive: falsches Geschlecht (*et bil*, *bilet*), falsche Mehrzahl (*mande* statt *mænd*), bestimmter Plural.
+- Adjektive: falsche Endung (*store* statt *stort*).
+- Mehrdeutige Formen (*kom* = Datid & Imperativ, *dansk* = Grundform & t-form) werden erkannt und nie als Distraktor genutzt.
 
-### Toleranz bei Stufe 3
-- Groß/Kleinschreibung, Leerzeichen, abschließendes „!“ egal.
-- Infinitiv mit oder ohne „at“.
-- „ae/oe/aa“ statt „æ/ø/å“ wird als richtig gewertet, mit Hinweis.
-- Førnutid ohne oder mit falschem Hilfsverb (har/er) → falsch, mit gezieltem Hinweis.
+**Toleranz in Stufe 3:** Groß/Klein, Leerzeichen, „!“ egal · „at“ / „jeg“ / „to“ als Präfix erlaubt ·
+„ae/oe/aa“ statt „æ/ø/å“ zählt als richtig (mit Hinweis) · gezielte Hinweise (Hilfsverb fehlt, falsches
+Geschlecht, Artikel fehlt, „das ist die Form für …“) – alle in der gewählten Ausgangssprache.
 
-### Wiederholung (Spaced Repetition, Leitner-light)
-- Jedes Item hat eine Box 0–5 (localStorage).
-- Richtig → Box +1, falsch → Box 0.
-- Fragen werden gewichtet gezogen: Gewicht = `6 − box` → schwache Items kommen öfter.
-- Falsch beantwortete Items werden am Ende der Runde einmal wiederholt.
-- Ergebnisbildschirm: „Fehler wiederholen“ startet eine Runde nur mit den Fehlern.
+**Wiederholung:** Leitner-Boxen 0–5 pro Item; Gewicht `6 − box` bei der Auswahl; Fehler werden am Ende
+der Runde wiederholt; „Fehler wiederholen“ im Ergebnis.
 
 ## 3. Modulstruktur
 
 ```
-index.html              App-Shell, iOS-Meta-Tags, lädt js/app.js als ES-Modul
-manifest.webmanifest    PWA-Manifest (standalone, Icons, Farben)
-sw.js                   Service Worker (Offline-Cache, versioniert)
-css/app.css             Design-Tokens (Light/Dark), iOS-Layout, Safe Areas
-icons/                  App-Icons (PNG 180/192/512)
+index.html               App-Shell, iOS-Meta-Tags, lädt js/app.js als ES-Modul
+manifest.webmanifest     PWA-Manifest
+sw.js                    Service Worker (Offline-Cache, CACHE_VERSION)
+css/app.css              Design-Tokens (Light/Dark), iOS-Layout, Sheet, Safe Areas
+icons/                   App-Icons (PNG 180/192/512)
 js/
-  data.js               Reine Daten: Zeitformen, Gruppen, 28 Verben (DA + DE), Beispielsätze
-  quiz.js               Reine Logik (kein DOM): Items, Fragen, Distraktoren, Antwortprüfung
-  storage.js            Fortschritt & Einstellungen (localStorage, fehlertolerant)
-  speech.js             Aussprache über Web Speech API (da-DK)
-  app.js                UI: Screens rendern, Events, Navigation (Hash-frei, State-basiert)
-tests/quiz.test.js      Unit-Tests der Quiz-Logik (node --test)
+  i18n.js                Sprachen (LANGUAGES), UI-Texte (STRINGS), t(), tr()
+  decks/
+    index.js             Registry: DECKS = [verbsDeck, vocabDeck] + Lookup-Tabellen
+    verbs.js             Deck „Verben“: Formen, Gruppen, Einträge, Beispiele, Regeln
+    vocab.js             Deck „Vokabeln“: Formen, Themen, Einträge, Regeln
+  quiz.js                Generische Logik (kein DOM): Items, Auswahl, Fragen, Prüfung
+  storage.js             Einstellungen (inkl. Migration v1) & Fortschritt in localStorage
+  speech.js              Aussprache (Web Speech API, da-DK)
+  app.js                 UI: State, Screens, Events
+tests/quiz.test.js       Unit-Tests (node --test): Logik, beide Decks, Vollständigkeit der Übersetzungen
+.github/workflows/pages.yml   Tests + Deployment auf GitHub Pages
+```
+
+### Deck-Schnittstelle
+
+Jeder Lernbereich ist ein Objekt mit derselben Form – die Engine (`quiz.js`) und die UI (`app.js`)
+kennen keine Verben oder Vokabeln, nur Decks:
+
+```js
+{
+  id: 'vocab', keyPrefix: 'vocab/', icon: '📚',
+  forms:   [{ id: 'def', da: 'Bestemt', tr: { de: 'bestimmt', en: 'definite' } }, …],
+  groups:  [{ id: 'city', color: 'teal', sub: 'By og trafik', name: {de, en}, tip: {de, en} }, …],
+  entries: [{ id: 'bil', group: 'city', tr: { de: 'Auto', en: 'car' },
+              da: { base: 'en bil', def: 'bilen', plural: 'biler' },
+              trForms: { de: { base: 'ein Auto', … }, en: { base: 'a car', … } } }, …],
+  examples: [],                      // optionale Beispielsätze
+  tableForms, headForm,              // Darstellung in der Liste
+  wrongForms(entry, form),           // Distraktoren für Stufe 2
+  accepted(entry, form), clean(form, input, entry),   // Prüfung Stufe 3
+  hint(entry, form, input, lang), fallbackHint(…),    // gezielte Hinweise
+  blank(entry, form),                // Lückentext, z. B. „jeg ___“, „en/et ___“
+}
 ```
 
 ### Datenfluss
 
 ```
-data.js ──► quiz.js ──► app.js ──► DOM
-              ▲            │
-              │            ▼
-          storage.js ◄── Antworten (Box-Updates)
-                           │
-                       speech.js (🔊)
+          ┌──────────── i18n.js (Ausgangssprache) ───────────┐
+          ▼                                                   ▼
+decks/* ──► quiz.js ──────────────► app.js ──► DOM      Hinweise/Optionen
+                ▲                     │
+                └──── storage.js ◄────┘  (Boxen, Einstellungen)
+                                      │
+                                  speech.js 🔊
 ```
 
-- **data.js** ist die einzige Stelle, an der Vokabular steht → neue Kapitel = neue Einträge.
-- **quiz.js** ist zufallsgesteuert über einen injizierbaren `rng` → deterministisch testbar.
-- **app.js** hält einen einfachen State (`screen`, `settings`, `session`) und rendert per Template-Strings.
+## 4. Bedienung & Screens
 
-### Datenmodell (Verb)
-
-```js
-{
-  id: 'spise', group: 'g2', de: 'essen',
-  da: { inf: 'at spise', nutid: 'spiser', datid: 'spiste', fornutid: 'har spist', imperativ: 'spis' },
-  deForms: { inf: 'essen', nutid: 'ich esse', datid: 'ich aß', fornutid: 'ich habe gegessen', imperativ: 'iss!' }
-}
+```
+┌──────────────────────────────────────┐
+│ [🔤 Verben | 📚 Vokabeln]        🌐 │  ← Topbar: Bereichsumschalter + Sprachknopf
+│ Dänisch lernen                       │
+│ Lernstand ▓▓▓░░░                     │
+│ ① Erkennen  ② Auswählen  ③ Schreiben │
+│ Filter: Gruppen/Themen · Formen · …  │
+├──────────────────────────────────────┤
+│   🎯 Üben          📖 Tabelle/Liste  │  ← Tabbar (bezieht sich auf den aktiven Bereich)
+└──────────────────────────────────────┘
 ```
 
-## 4. Screens
+1. **Start** (pro Bereich) – Lernstand, drei Stufen, Filter, Fragenanzahl, Auto-Vorlesen.
+2. **Quiz** – Frage, Optionen bzw. Eingabe; Feedback mit allen Formen, Regel-Tipp, ggf. Beispielsatz.
+3. **Ergebnis** – Punkte, Fehlerliste, „Fehler wiederholen“ / „Neue Runde“ / „Nächste Stufe“.
+4. **Verbtabelle / Wortliste** – alle Einträge nach Gruppen/Themen, antippen = vorlesen, Lernstand.
 
-1. **Start** – drei Stufen-Karten, Filter (Gruppen, Zeitformen, Fragenanzahl), Gesamtfortschritt.
-2. **Quiz** – Fortschrittsbalken, Frage, Optionen bzw. Eingabefeld; danach Feedback-Panel mit
-   der **kompletten Konjugationsreihe** des Verbs, Regel-Hinweis der Gruppe und ggf. Beispielsatz.
-3. **Ergebnis** – Punkte, Fehlerliste, „Fehler wiederholen“ / „Neue Runde“.
-4. **Verbtabelle** – alle Verben nach Gruppen, antippen = vorlesen, Lernstand pro Verb, Beispielsätze.
+### 🌐 Einstellungen (Sprache)
+- Der **Weltkugel-Knopf** oben rechts öffnet ein iOS-typisches **Bottom-Sheet**.
+- Dort wird die **Ausgangssprache** gewählt (🇩🇪 Deutsch / 🇬🇧 English); Dänisch bleibt Lernsprache.
+- Die Wahl wird gespeichert; beim ersten Start wird die Gerätesprache erkannt (Fallback Deutsch).
+- Das Sheet ist der zentrale Ort für künftige Einstellungen (z. B. Sprechtempo, Fragenanzahl).
 
-## 5. iOS-Optimierung
+### Neue Ausgangssprache hinzufügen (z. B. Französisch)
+1. `js/i18n.js`: Eintrag in `LANGUAGES` und Block in `STRINGS`.
+2. In jedem Deck `tr.fr` / `trForms.fr` bzw. `name.fr` / `tip.fr` ergänzen.
+3. `npm test` – der Vollständigkeitstest meldet jede fehlende Übersetzung.
 
-- `viewport-fit=cover` + `env(safe-area-inset-*)` für Notch / Dynamic Island / Home-Indicator.
-- `apple-mobile-web-app-capable`, `status-bar-style`, Apple-Touch-Icon 180×180 PNG.
-- Eingabefelder ≥ 16 px (verhindert Auto-Zoom), `autocapitalize/autocorrect/spellcheck = off`.
-- Tasten **æ ø å** über dem Eingabefeld (deutsche iOS-Tastatur hat sie nicht direkt);
-  `pointerdown`+`preventDefault` hält die Tastatur offen.
-- Touch-Ziele ≥ 44 pt, `-webkit-tap-highlight-color: transparent`, `touch-action: manipulation`.
-- `100dvh`-Layout, Dark Mode über `prefers-color-scheme`, System-Font (SF Pro).
-- Aussprache mit iOS-Stimme „Sara“ (da-DK) über `speechSynthesis`.
+### Neuen Lernbereich hinzufügen (z. B. Redewendungen)
+1. `js/decks/phrases.js` mit obiger Schnittstelle (eigener `keyPrefix`!).
+2. In `js/decks/index.js` registrieren, UI-Texte `phrases.*` in `i18n.js` ergänzen.
+3. Datei in `sw.js` (`ASSETS`) aufnehmen und `CACHE_VERSION` erhöhen.
 
-## 6. Deployment
+## 5. Speicherung
 
-Statisch – z. B. GitHub Pages (Settings → Pages → Branch wählen). Auf dem iPhone in Safari öffnen →
-Teilen → **„Zum Home-Bildschirm“**. Beim Ändern von Assets `CACHE_VERSION` in `sw.js` erhöhen.
+| Schlüssel | Inhalt |
+|---|---|
+| `dansk-verber:settings:v1` | `{ lang, area, count, autoSpeak, decks: { verbs: {groups, forms}, vocab: {…} } }` (alte v1-Felder `groups/tenses` werden migriert) |
+| `dansk-verber:progress:v1` | `{ "spise:datid": {box, seen, correct}, "vocab/bil:def": {…} }` – Verben ohne Präfix (kompatibel zu v1), Vokabeln mit `vocab/` |
 
-## 7. Erweiterbarkeit
+## 6. iOS-Optimierung
 
-- Weitere Kapitel: neue Verben in `data.js` (Feld `chapter`), Filter im Start-Screen.
-- Lückentext-Modus aus den Beispielsätzen (Daten sind bereits mit markierten Verbformen hinterlegt).
+`viewport-fit=cover` + Safe-Area-Insets · Apple-Touch-Icon · Eingaben ≥ 16 px (kein Auto-Zoom) ·
+`autocapitalize/autocorrect/spellcheck = off` · Tasten **æ ø å** (Tastatur bleibt offen) ·
+Touch-Ziele ≥ 44 pt · Bottom-Sheet & Segmented Control im iOS-Stil · Dark Mode · Aussprache mit „Sara“ (da-DK).
+
+## 7. Deployment
+
+GitHub Actions (`.github/workflows/pages.yml`): bei jedem Push → `npm test` → Upload der statischen
+Dateien → **GitHub Pages**. Einmalig im Repo: *Settings → Pages → Source: „GitHub Actions“*.
+Auf dem iPhone: URL in Safari öffnen → Teilen → **„Zum Home-Bildschirm“**.
+Bei geänderten Assets `CACHE_VERSION` in `sw.js` erhöhen, damit installierte Apps aktualisieren.
