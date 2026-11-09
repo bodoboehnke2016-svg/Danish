@@ -25,7 +25,7 @@ npm test         # Unit-Tests der Quiz-Logik
 
 ## Aufs iPhone
 
-1. Deployment läuft automatisch per GitHub Actions auf **GitHub Pages** (einmalig: Repo → Settings → Pages → Source „GitHub Actions“).
+1. Jeder Push wird automatisch über **GitHub Pages** veröffentlicht: https://bodoboehnke2016-svg.github.io/Danish/
 2. URL in **Safari** öffnen → Teilen-Symbol → **„Zum Home-Bildschirm“**.
 3. Die App startet danach im Vollbild und funktioniert auch offline.
 

@@ -68,7 +68,7 @@ js/
   speech.js              Aussprache (Web Speech API, da-DK)
   app.js                 UI: State, Screens, Events
 tests/quiz.test.js       Unit-Tests (node --test): Logik, beide Decks, Vollständigkeit der Übersetzungen
-.github/workflows/pages.yml   Tests + Deployment auf GitHub Pages
+.github/workflows/tests.yml   Unit-Tests bei jedem Push
 ```
 
 ### Deck-Schnittstelle
@@ -155,7 +155,8 @@ Touch-Ziele ≥ 44 pt · Bottom-Sheet & Segmented Control im iOS-Stil · Dark Mo
 
 ## 7. Deployment
 
-GitHub Actions (`.github/workflows/pages.yml`): bei jedem Push → `npm test` → Upload der statischen
-Dateien → **GitHub Pages**. Einmalig im Repo: *Settings → Pages → Source: „GitHub Actions“*.
+**GitHub Pages – „Deploy from a branch“**: Jeder Push auf den Branch wird automatisch veröffentlicht
+unter `https://bodoboehnke2016-svg.github.io/Danish/`. Parallel laufen per GitHub Actions
+(`.github/workflows/tests.yml`) die Unit-Tests.
 Auf dem iPhone: URL in Safari öffnen → Teilen → **„Zum Home-Bildschirm“**.
 Bei geänderten Assets `CACHE_VERSION` in `sw.js` erhöhen, damit installierte Apps aktualisieren.
