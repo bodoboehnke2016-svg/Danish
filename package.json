@@ -1,0 +1,11 @@
+{
+  "name": "dansk-verber",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Mobile Web App (PWA) zum Lernen dänischer Verben – Konjugation, A2",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "test": "node --test tests/*.test.js"
+  }
+}
