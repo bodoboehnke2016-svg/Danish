@@ -4,9 +4,10 @@ import {
 } from './quiz.js';
 import { loadSettings, saveSettings, loadProgress, saveProgress, resetDeckProgress } from './storage.js';
 import { LANGUAGES, t as translate, tr } from './i18n.js';
-import { speak, canSpeak } from './speech.js';
+import { speak, canSpeak, configure as configureSpeech, danishVoices, onVoices, pickVoice } from './speech.js';
 
 const app = document.getElementById('app');
+const SPEECH_TEST = 'Hej! Jeg lærer dansk.';
 
 const LEVELS = [
   { id: 1, icon: '👀' },
@@ -21,6 +22,8 @@ const state = {
   session: null,
   sheet: false,          // Sprach-/Einstellungs-Sheet offen?
 };
+
+configureSpeech({ voiceURI: state.settings.voiceURI, speechRate: state.settings.speechRate });
 
 // ---------- Helfer ----------
 
@@ -53,6 +56,39 @@ function entryMastery(d, entry) {
   const forms = Object.keys(entry.da);
   const sum = forms.reduce((s, f) => s + (state.progress[itemKey(d, { entryId: entry.id, form: f })]?.box ?? 0), 0);
   return sum / (forms.length * MAX_BOX);
+}
+
+// ---------- Aussprache ----------
+
+let toastTimer;
+function toast(msg) {
+  let el = document.getElementById('toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'toast';
+    el.className = 'toast';
+    el.setAttribute('role', 'status');
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+/** Spricht und zeigt am angetippten Element, dass gerade gesprochen wird. */
+function say(text, el) {
+  document.querySelectorAll('.speaking').forEach((x) => x.classList.remove('speaking'));
+  el?.classList.add('speaking');
+  speak(text, {
+    onend: () => el?.classList.remove('speaking'),
+    onfail: (reason) => {
+      el?.classList.remove('speaking');
+      if (reason === 'unsupported') toast(t('speech.unsupported'));
+      else if (!danishVoices().length) toast(t('speech.noVoice'));
+      else toast(t('speech.failed'));
+    },
+  });
 }
 
 function applyLang() {
@@ -98,7 +134,7 @@ function submitAnswer(correct, given, hint) {
   if (!correct && !entry.retry) {
     s.queue.push({ q: buildQuestion(d, entry.q.item, s.level, lang()), retry: true });
   }
-  if (state.settings.autoSpeak) speak(entry.q.answer);
+  if (state.settings.autoSpeak) say(entry.q.answer);
   render();
   requestAnimationFrame(() => document.querySelector('.feedback')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
 }
@@ -134,13 +170,44 @@ function renderTabbar() {
   return `<nav class="tabbar">${tab('home', '🎯', t('tab.practice'))}${tab('table', '📖', dt('list'))}</nav>`;
 }
 
+function renderSpeechSettings() {
+  const voices = danishVoices();
+  const active = pickVoice();
+  let status;
+  if (!canSpeak()) status = `<p class="speech-status warn">${t('speech.unsupported')}</p>`;
+  else if (!voices.length) status = `<p class="speech-status warn">${t('speech.noVoice')}</p>`;
+  else status = `<p class="speech-status ok">✓ ${t('speech.voicesFound', { n: voices.length, name: esc(active?.name ?? '') })}</p>`;
+  return `
+    <div class="label">🔊 ${t('speech.title')}</div>
+    <div class="card speech-card">
+      ${status}
+      ${voices.length > 1 ? `
+        <label class="field">
+          <span>${t('speech.voice')}</span>
+          <select data-action="voice">
+            <option value="">${t('speech.auto')}</option>
+            ${voices.map((v) => `<option value="${esc(v.voiceURI)}" ${v.voiceURI === state.settings.voiceURI ? 'selected' : ''}>${esc(v.name)}</option>`).join('')}
+          </select>
+        </label>` : ''}
+      <div class="field">
+        <span>${t('speech.rate')}</span>
+        <div class="segmented">
+          ${[[0.7, 'speech.slow'], [0.9, 'speech.normal']].map(([r, k]) => `<button class="${state.settings.speechRate === r ? 'on' : ''}" data-action="rate" data-rate="${r}">${t(k)}</button>`).join('')}
+        </div>
+      </div>
+      ${canSpeak() ? `<button class="btn secondary block" data-action="speech-test">▶︎ ${t('speech.test')} ${quote(SPEECH_TEST)}</button>` : ''}
+      <p class="muted small">${t('speech.silent')}</p>
+    </div>`;
+}
+
 function renderSheet() {
   if (!state.sheet) return '';
   return `
     <div class="sheet-backdrop" data-action="close-sheet"></div>
     <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
       <div class="grabber"></div>
-      <h2 id="sheet-title">🌐 ${t('settings.title')}</h2>
+      <h2 id="sheet-title">🌐 ${t('settings.heading')}</h2>
+      <div class="label">${t('settings.title')}</div>
       <p class="muted small">${t('settings.desc')}</p>
       <div class="lang-list">
         ${LANGUAGES.map((l) => `
@@ -149,7 +216,7 @@ function renderSheet() {
             <span class="check">${l.id === lang() ? '✓' : ''}</span>
           </button>`).join('')}
       </div>
-      <div class="learn-lang muted small">🎓 Dansk 🇩🇰</div>
+      ${renderSpeechSettings()}
       <button class="btn primary block" data-action="close-sheet">${t('done')}</button>
     </section>`;
 }
@@ -442,7 +509,14 @@ app.addEventListener('click', (e) => {
       saveSettings(state.settings);
       render();
       break;
-    case 'speak': speak(el.dataset.text); break;
+    case 'speak': say(el.dataset.text, el); break;
+    case 'speech-test': say(SPEECH_TEST, el); break;
+    case 'rate':
+      state.settings.speechRate = Number(el.dataset.rate);
+      configureSpeech({ speechRate: state.settings.speechRate });
+      saveSettings(state.settings);
+      render();
+      break;
     case 'choose': {
       const q = currentEntry().q;
       const i = Number(el.dataset.i);
@@ -469,6 +543,13 @@ app.addEventListener('click', (e) => {
 });
 
 app.addEventListener('change', (e) => {
+  if (e.target.dataset.action === 'voice') {
+    state.settings.voiceURI = e.target.value;
+    configureSpeech({ voiceURI: e.target.value });
+    saveSettings(state.settings);
+    say(SPEECH_TEST);
+    return;
+  }
   if (e.target.dataset.action === 'autospeak') {
     state.settings.autoSpeak = e.target.checked;
     saveSettings(state.settings);
@@ -512,8 +593,21 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+onVoices(() => { if (state.sheet) render(); });
+
 render();
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  const hadController = !!navigator.serviceWorker.controller;
+  let reloaded = false;
+  // Neue Version übernommen → einmal neu laden, damit der aktuelle Code läuft
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hadController && !reloaded) {
+      reloaded = true;
+      location.reload();
+    }
+  });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then((reg) => reg.update()).catch(() => {});
+  });
 }

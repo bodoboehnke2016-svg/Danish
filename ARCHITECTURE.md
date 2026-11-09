@@ -54,7 +54,7 @@ der Runde wiederholt; „Fehler wiederholen“ im Ergebnis.
 ```
 index.html               App-Shell, iOS-Meta-Tags, lädt js/app.js als ES-Modul
 manifest.webmanifest     PWA-Manifest
-sw.js                    Service Worker (Offline-Cache, CACHE_VERSION)
+sw.js                    Service Worker (Network-first, Cache als Offline-Fallback)
 css/app.css              Design-Tokens (Light/Dark), iOS-Layout, Sheet, Safe Areas
 icons/                   App-Icons (PNG 180/192/512)
 js/
@@ -130,6 +130,14 @@ decks/* ──► quiz.js ──────────────► app.js �
 - Die Wahl wird gespeichert; beim ersten Start wird die Gerätesprache erkannt (Fallback Deutsch).
 - Das Sheet ist der zentrale Ort für künftige Einstellungen (z. B. Sprechtempo, Fragenanzahl).
 
+### 🔊 Aussprache (`speech.js`)
+Web Speech API mit dänischer Systemstimme (iOS: „Sara“). Robust gegen bekannte iOS-Fehler:
+keine Ausgabe direkt nach `cancel()` (120 ms Pause), Referenz auf die laufende Utterance (GC-Schutz),
+`resume()` bei hängender Warteschlange, Stimmen-Polling (iOS feuert `voiceschanged` unzuverlässig),
+Freischalten bei der ersten Berührung, Watchdog (3,5 s) → Hinweis-Toast statt stillem Scheitern.
+Der angetippte Knopf pulsiert, solange gesprochen wird. Im 🌐-Sheet: Status der dänischen Stimme,
+Stimmenauswahl (bei mehreren), Tempo (langsam/normal) und Test-Knopf.
+
 ### Neue Ausgangssprache hinzufügen (z. B. Französisch)
 1. `js/i18n.js`: Eintrag in `LANGUAGES` und Block in `STRINGS`.
 2. In jedem Deck `tr.fr` / `trForms.fr` bzw. `name.fr` / `tip.fr` ergänzen.
@@ -159,4 +167,5 @@ Touch-Ziele ≥ 44 pt · Bottom-Sheet & Segmented Control im iOS-Stil · Dark Mo
 unter `https://bodoboehnke2016-svg.github.io/Danish/`. Parallel laufen per GitHub Actions
 (`.github/workflows/tests.yml`) die Unit-Tests.
 Auf dem iPhone: URL in Safari öffnen → Teilen → **„Zum Home-Bildschirm“**.
-Bei geänderten Assets `CACHE_VERSION` in `sw.js` erhöhen, damit installierte Apps aktualisieren.
+Der Service Worker arbeitet *network-first*: Online kommt immer die neueste Version (installierte Apps laden
+nach einem Update einmal automatisch neu), offline greift der Cache. Bei geänderter Asset-Liste `CACHE_VERSION` erhöhen.

@@ -32,6 +32,8 @@ export function defaultSettings() {
     area: 'verbs',
     count: 10,
     autoSpeak: false,
+    voiceURI: '',
+    speechRate: 0.9,
     decks: Object.fromEntries(DECKS.map((d) => [d.id, deckDefaults(d)])),
   };
 }
@@ -43,6 +45,8 @@ export function loadSettings() {
   if (DECKS.some((d) => d.id === saved.area)) s.area = saved.area;
   if (saved.count) s.count = saved.count;
   if (typeof saved.autoSpeak === 'boolean') s.autoSpeak = saved.autoSpeak;
+  if (typeof saved.voiceURI === 'string') s.voiceURI = saved.voiceURI;
+  if (typeof saved.speechRate === 'number') s.speechRate = saved.speechRate;
   // Migration aus Version 1 (nur Verben, Felder groups/tenses auf oberster Ebene)
   if (Array.isArray(saved.groups) || Array.isArray(saved.tenses)) {
     s.decks.verbs = { groups: saved.groups ?? s.decks.verbs.groups, forms: saved.tenses ?? s.decks.verbs.forms };

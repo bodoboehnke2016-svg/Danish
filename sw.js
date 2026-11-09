@@ -1,5 +1,6 @@
-// Service Worker: Offline-Cache. Bei Änderungen an Assets CACHE_VERSION erhöhen.
-const CACHE_VERSION = 'dansk-verber-v2';
+// Service Worker: Network-first (Updates kommen sofort an), Cache als Offline-Fallback.
+// Bei Änderungen an der Asset-Liste CACHE_VERSION erhöhen.
+const CACHE_VERSION = 'dansk-verber-v3';
 const ASSETS = [
   './',
   './index.html',
@@ -31,16 +32,17 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  if (e.request.method !== 'GET') return;
+  const req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then((hit) =>
-      hit || fetch(e.request).then((res) => {
-        if (res.ok && new URL(e.request.url).origin === location.origin) {
+    fetch(req, { cache: 'no-cache' })
+      .then((res) => {
+        if (res.ok) {
           const copy = res.clone();
-          caches.open(CACHE_VERSION).then((c) => c.put(e.request, copy));
+          caches.open(CACHE_VERSION).then((c) => c.put(req, copy));
         }
         return res;
-      }),
-    ),
+      })
+      .catch(() => caches.match(req, { ignoreSearch: true }).then((hit) => hit || caches.match('./index.html'))),
   );
 });
